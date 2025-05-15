@@ -2,20 +2,24 @@ import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
-from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmltemplate import css, bot_template, user_template
-from langchain.llms import HuggingFaceHub
+
+# Change #1: Replace OpenAI/HuggingFace imports with Ollama
+from langchain_community.embeddings import OllamaEmbeddings  # Change #1
+from langchain_community.chat_models import ChatOllama        # Change #1
+
+# Removed imports:
+# from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings  ❌ removed
+# from langchain.chat_models import ChatOpenAI                                    ❌ removed
+# from langchain.llms import HuggingFaceHub                                       ❌ removed
 
 def get_pdf_text(pdf_docs):
     text = ""
-# telling the program about no of pages in the pdf
     for pdf in pdf_docs:
         pdf_reader = PdfReader(pdf)
-# reading the full page in the present pdf
         for page in pdf_reader.pages:
             text += page.extract_text()
     return text
@@ -33,15 +37,15 @@ def get_text_chunks(text):
 
 
 def get_vectorstore(text_chunks):
-    # embeddings = HuggingFaceInstructEmbeddings()
-    embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
+    # Change #2: Use Ollama's local embedding model
+    embeddings = OllamaEmbeddings(model="all-minilm")  # Change #2
     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
     return vectorstore
 
 
 def get_conversation_chain(vectorstore):
-    # llm = ChatOpenAI()
-    llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
+    # Change #3: Use Ollama's local LLM for answering
+    llm = ChatOllama(model="llama3", temperature=0.5)  # Change #3
 
     memory = ConversationBufferMemory(
         memory_key='chat_history', return_messages=True)
@@ -88,18 +92,10 @@ def main():
             "Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
         if st.button("Process"):
             with st.spinner("Processing"):
-                # get pdf text
                 raw_text = get_pdf_text(pdf_docs)
-
-                # get the text chunks
                 text_chunks = get_text_chunks(raw_text)
-
-                # create vector store
                 vectorstore = get_vectorstore(text_chunks)
-
-                # create conversation chain
-                st.session_state.conversation = get_conversation_chain(
-                    vectorstore)
+                st.session_state.conversation = get_conversation_chain(vectorstore)
 
 
 if __name__ == '__main__':
