@@ -1,0 +1,10 @@
+streamlit
+python-dotenv
+PyPDF2
+langchain==0.0.286           # adjust to your tested version
+langchain-community
+InstructorEmbedding==1.0.1
+sentence-transformers==2.2.2
+huggingface-hub==0.14.1
+torch                       # will install the latest compatible for your system
+transformers
