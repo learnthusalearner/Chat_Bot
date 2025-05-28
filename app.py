@@ -29,8 +29,8 @@ def get_pdf_chunks_with_metadata(pdf_docs):
 def split_chunks_with_metadata(chunks_with_metadata):
     text_splitter = CharacterTextSplitter(
         separator="\n",
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=100,
+        chunk_overlap=50,
         length_function=len
     )
     texts, metadatas = [], []
@@ -86,7 +86,7 @@ def handle_userinput(user_question):
 
     st.write(user_template.replace("{{MSG}}", user_question), unsafe_allow_html=True)
     st.write(bot_template.replace("{{MSG}}", answer), unsafe_allow_html=True)
-
+ 
     # Source of page from the db 
     docs = st.session_state.conversation.retriever.get_relevant_documents(user_question)
     for doc in docs:
